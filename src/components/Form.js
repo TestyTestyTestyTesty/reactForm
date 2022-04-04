@@ -11,10 +11,12 @@ import {
 } from "./styles/form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import axios from "axios";
+import SelectCountry from "./SelectCountry";
 
 let schema = yup.object().shape({
   firstName: yup.string().required("First name is required"),
   lastName: yup.string().required("Last name is required"),
+  nationality: yup.string().required("Nationality is required"),
   pesel: yup
     .string()
     .required("PESEL is required")
@@ -27,47 +29,47 @@ let schema = yup.object().shape({
 });
 
 export default function Form() {
-  const [countries, setCountries] = useState([]);
-  const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
-
-  useEffect(() => {
-    const fetchCountries = async () => {
-      const result = await axios(
-        `https://restcountries.com/v3.1/name/${query}`
-      );
-      setCountries(result.data);
-    };
-    fetchCountries();
-  }, [query]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const { register, handleSubmit, formState } = useForm({
     resolver: yupResolver(schema),
   });
-  const onChangeHandler = (value) => {
-    let matches = [];
-    setQuery(value);
-    if (value.length) {
-      matches = countries.filter(country => country.name.common.toLowerCase().indexOf(value.toLowerCase()) > -1);
-    }
-    setSuggestions(matches);
-    console.log(value, value.length, matches);
-  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setError(false);
+        setLoading(true);
+        const result = await axios(`https://restcountries.com/v3.1/all`);
+        const matches = result.data;
+        setSuggestions(matches);
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setError(true);
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
   const submitForm = (data) => {
     console.log(data);
   };
   return (
     <StyledForm onSubmit={handleSubmit(submitForm)}>
       <StyledRow>
-        <StyledLabel htmlFor="pesel">Nationality:</StyledLabel>
-        <StyledInput
-          type="search"
-          name="nationaly"
-          id="mationality"
-          placeholder="Nationality"
-          value={query}
-          onChange={(e) => onChangeHandler(e.target.value)}
+        <SelectCountry
+          suggestions={suggestions}
+          loading={loading}
+          error={formState.errors.nationality}
+          fetchError={error}
+          validation={register}
         />
+        {formState.errors.nationality?.message && (
+          <StyledError>{formState.errors.nationality?.message}</StyledError>
+        )}
       </StyledRow>
       <StyledRow>
         <StyledLabel htmlFor="firstName">First name:</StyledLabel>
@@ -108,7 +110,7 @@ export default function Form() {
           name="pesel"
           id="pesel"
           placeholder="PESEL"
-          error={formState.errors.lastName}
+          error={formState.errors.pesel}
           {...register("pesel", {
             required: "Required",
           })}
@@ -125,7 +127,7 @@ export default function Form() {
           name="password"
           id="password"
           placeholder="Password"
-          error={formState.errors.lastName}
+          error={formState.errors.password}
           {...register("password", {
             required: "Required",
           })}

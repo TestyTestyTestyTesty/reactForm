@@ -5,6 +5,7 @@ export const StyledForm = styled.form`
   flex-direction: column;
   max-width: 50%;
   margin: 50px auto;
+  position: relative;
 `;
 export const StyledRow = styled.div`
   width: 100%;
@@ -67,5 +68,9 @@ export const StyledSubmit = styled.input`
   margin: 0 auto;
   &:hover {
     background: #4b3fdb;
+  }
+  &:disabled{
+    background: grey;
+    cursor: not-allowed;
   }
 `;
